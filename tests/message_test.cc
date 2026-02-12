@@ -6,9 +6,11 @@
 #include <cstddef>
 #include <cstring>
 #include <engine/protocol.hpp>
+#include <engine/protocol/detail/message_data.hpp>
 #include <boost/contract.hpp>
 
 using engine::protocol::message;
+using engine::protocol::detail::message_data;
 
 void set_error_handler() {
 #ifndef BOOST_CONTRACT_NO_CHECKS
@@ -67,24 +69,24 @@ TEST(message, reads_action) {
     ASSERT_EQ(_msg.get_action(), _action);
 }
 
-TEST(message, reads_param_count) {
+TEST(message_data, reads_param_count) {
     alignas(4) std::array<std::byte, 36> _buffer{};
     constexpr std::uint16_t _count = 3;
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
 
-    const message _msg(_buffer, true);
-    ASSERT_EQ(_msg.get_param_count(), _count);
+    const message_data _data(_buffer, true);
+    ASSERT_EQ(_data.get_param_count(), _count);
 }
 
-TEST(message, reads_param_sizes) {
+TEST(message_data, reads_param_sizes) {
     alignas(4) std::array<std::byte, 64> _buffer{};
     constexpr std::uint16_t _count = 3;
     constexpr std::uint32_t _sizes[3] = {10, 20, 30};
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
     std::memcpy(_buffer.data() + 24, _sizes, sizeof(_sizes));
 
-    const message _msg(_buffer);
-    const auto *_msg_sizes = _msg.get_param_sizes();
+    const message_data _data(_buffer);
+    const auto *_msg_sizes = _data.get_param_sizes();
     ASSERT_NE(_msg_sizes, nullptr);
     ASSERT_EQ(_msg_sizes[0], 10u);
     ASSERT_EQ(_msg_sizes[1], 20u);
@@ -108,9 +110,9 @@ TEST(message, reads_params_and_data) {
 
     const message _msg(_buffer, true);
 
-    const auto _p0 = _msg.get_param(0);
-    const auto _p1 = _msg.get_param(1);
-    const auto _p2 = _msg.get_param(2);
+    const auto _p0 = _msg.get_parameter(0);
+    const auto _p1 = _msg.get_parameter(1);
+    const auto _p2 = _msg.get_parameter(2);
 
     ASSERT_EQ(_p0.size(), 1u);
     ASSERT_EQ(_p1.size(), 2u);
@@ -124,21 +126,21 @@ TEST(message, reads_params_and_data) {
     ASSERT_EQ(_p2[2], std::byte{0xFF});
 }
 
-TEST(message, get_params_data_returns_correct_pointer) {
+TEST(message_data, get_params_data_returns_correct_pointer) {
     alignas(4) std::array<std::byte, 64> _buffer{};
     constexpr std::uint16_t _count = 1;
     constexpr std::uint32_t _size = 4;
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
     std::memcpy(_buffer.data() + 24, &_size, sizeof(_size));
 
-    const message _msg(_buffer, true);
-    ASSERT_EQ(_msg.get_params_data(), _buffer.data() + 24 + 4);
+    const message_data _data(_buffer, true);
+    ASSERT_EQ(_data.get_params_data(), _buffer.data() + 24 + 4);
 }
 
-TEST(message, get_params_data_returns_nullptr_for_zero_params) {
+TEST(message_data, get_params_data_returns_nullptr_for_zero_params) {
     alignas(4) std::array<std::byte, 24> _buffer{};
-    const message _msg(_buffer, true);
-    ASSERT_EQ(_msg.get_params_data(), nullptr);
+    const message_data _data(_buffer, true);
+    ASSERT_EQ(_data.get_params_data(), nullptr);
 }
 
 #ifndef BOOST_CONTRACT_NO_CHECKS
@@ -169,7 +171,7 @@ TEST(message, throws_on_out_of_bounds_param) {
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
 
     const message _msg(_buffer, true);
-    ASSERT_ANY_THROW(_msg.get_param(1));
+    ASSERT_ANY_THROW(_msg.get_parameter(1));
 }
 
 TEST(message, throws_on_too_many_params) {
@@ -188,6 +190,6 @@ TEST(message, throws_on_missing_precompute) {
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
 
     const message _msg(_buffer, false); // No precompute
-    ASSERT_ANY_THROW(_msg.get_param(0));
+    ASSERT_ANY_THROW(_msg.get_parameter(0));
 }
 #endif
