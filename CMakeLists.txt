@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
 option(BUILD_PROTOCOL_TESTS "Build PROTOCOL tests" ON)
 option(BUILD_PROTOCOL_BENCHMARK "Build PROTOCOL benchmark" ON)
 option(BUILD_STATIC "Build static library" OFF)
-option(ENGINE_ENABLE_CONTRACTS "Enable Boost.Contract checks" OFF)
+option(BUILD_CONTRACTS "Enable Boost.Contract checks" OFF)
 
 if (BUILD_STATIC)
     set(Boost_USE_STATIC_LIBS ON)
@@ -30,7 +30,7 @@ target_compile_features(engine-protocol INTERFACE cxx_std_23)
 
 target_link_libraries(engine-protocol INTERFACE Boost::contract)
 
-if (NOT ENGINE_ENABLE_CONTRACTS)
+if (NOT BUILD_CONTRACTS)
     target_compile_definitions(engine-protocol INTERFACE BOOST_CONTRACT_NO_CHECKS)
 endif ()
 
@@ -82,7 +82,7 @@ if (BUILD_PROTOCOL_TESTS)
             engine-protocol
     )
 
-    if (NOT ENGINE_ENABLE_CONTRACTS)
+    if (NOT BUILD_CONTRACTS)
         target_compile_definitions(engine-protocol-tests PRIVATE BOOST_CONTRACT_NO_CHECKS)
     endif ()
 
@@ -118,7 +118,7 @@ if (BUILD_PROTOCOL_BENCHMARK)
             engine-protocol
     )
 
-    if (NOT ENGINE_ENABLE_CONTRACTS)
+    if (NOT BUILD_CONTRACTS)
         target_compile_definitions(engine-protocol-benchmarks PRIVATE BOOST_CONTRACT_NO_CHECKS)
     endif ()
 endif ()
