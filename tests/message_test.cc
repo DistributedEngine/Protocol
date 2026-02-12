@@ -6,9 +6,38 @@
 #include <cstddef>
 #include <cstring>
 #include <engine/protocol.hpp>
+#include <boost/contract.hpp>
 
 using engine::protocol::message;
-using engine::protocol::alignment_error;
+
+void set_error_handler() {
+#ifndef BOOST_CONTRACT_NO_CHECKS
+    set_precondition_failure(
+    set_postcondition_failure(
+        set_invariant_failure(
+            boost::contract::set_old_failure(
+                [](const boost::contract::from where) {
+                    if (where == boost::contract::from_destructor) {
+                        // Never throw from destructors.
+                        std::clog << "ignored destructor contract failure" << std::endl;
+                    } else {
+                        throw; // Re-throw the assertion_failure exception.
+                    }
+                }
+            ))));
+
+    boost::contract::set_except_failure(
+        [](boost::contract::from) {
+            throw;
+        }
+    );
+    boost::contract::set_check_failure(
+        [] {
+            throw;
+        }
+    );
+#endif
+}
 
 TEST(message, can_be_identified) {
     alignas(4) std::array<std::byte, 24> _buffer = {
@@ -17,8 +46,8 @@ TEST(message, can_be_identified) {
         std::byte{0x9e}, std::byte{0xd3}, std::byte{0xb8}, std::byte{0x0b},
         std::byte{0x88}, std::byte{0x65}, std::byte{0xb3}, std::byte{0x4b},
         std::byte{0x01}, std::byte{0x00}, std::byte{0x00}, std::byte{0x00}, // action
-        std::byte{0x00}, std::byte{0x00},                                     // param_count
-        std::byte{0x00}, std::byte{0x00}                                      // padding
+        std::byte{0x00}, std::byte{0x00}, // param_count
+        std::byte{0x00}, std::byte{0x00} // padding
     };
 
     const message _msg(_buffer);
@@ -39,11 +68,11 @@ TEST(message, reads_action) {
 }
 
 TEST(message, reads_param_count) {
-    alignas(4) std::array<std::byte, 24> _buffer{};
+    alignas(4) std::array<std::byte, 36> _buffer{};
     constexpr std::uint16_t _count = 3;
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
 
-    const message _msg(_buffer);
+    const message _msg(_buffer, true);
     ASSERT_EQ(_msg.get_param_count(), _count);
 }
 
@@ -55,7 +84,7 @@ TEST(message, reads_param_sizes) {
     std::memcpy(_buffer.data() + 24, _sizes, sizeof(_sizes));
 
     const message _msg(_buffer);
-    const auto* _msg_sizes = _msg.get_param_sizes();
+    const auto *_msg_sizes = _msg.get_param_sizes();
     ASSERT_NE(_msg_sizes, nullptr);
     ASSERT_EQ(_msg_sizes[0], 10u);
     ASSERT_EQ(_msg_sizes[1], 20u);
@@ -112,25 +141,29 @@ TEST(message, get_params_data_returns_nullptr_for_zero_params) {
     ASSERT_EQ(_msg.get_params_data(), nullptr);
 }
 
+#ifndef BOOST_CONTRACT_NO_CHECKS
 TEST(message, throws_on_unaligned_buffer) {
+    set_error_handler();
+
     std::array<std::byte, 64> _buffer_raw{};
     // Find an unaligned pointer
-    std::byte* _ptr = _buffer_raw.data();
+    std::byte *_ptr = _buffer_raw.data();
     if (reinterpret_cast<std::uintptr_t>(_ptr) % 4 == 0) {
         _ptr += 1;
     }
     std::span<const std::byte> _unaligned_span(_ptr, 24);
 
-    ASSERT_THROW(message _msg(_unaligned_span), alignment_error);
+    ASSERT_ANY_THROW(message _msg(_unaligned_span));
 }
 
-#ifndef BOOST_CONTRACT_NO_CHECKS
 TEST(message, throws_on_small_buffer) {
+    set_error_handler();
     alignas(4) std::array<std::byte, 10> _small_buffer{};
     ASSERT_ANY_THROW(message _msg(_small_buffer));
 }
 
 TEST(message, throws_on_out_of_bounds_param) {
+    set_error_handler();
     alignas(4) std::array<std::byte, 64> _buffer{};
     constexpr std::uint16_t _count = 1;
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
@@ -140,6 +173,7 @@ TEST(message, throws_on_out_of_bounds_param) {
 }
 
 TEST(message, throws_on_too_many_params) {
+    set_error_handler();
     alignas(4) std::array<std::byte, 128> _buffer{};
     constexpr std::uint16_t _count = 9; // Max is 8
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));
@@ -148,6 +182,7 @@ TEST(message, throws_on_too_many_params) {
 }
 
 TEST(message, throws_on_missing_precompute) {
+    set_error_handler();
     alignas(4) std::array<std::byte, 64> _buffer{};
     constexpr std::uint16_t _count = 1;
     std::memcpy(_buffer.data() + 20, &_count, sizeof(_count));

@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
 option(BUILD_PROTOCOL_TESTS "Build PROTOCOL tests" ON)
 option(BUILD_PROTOCOL_BENCHMARK "Build PROTOCOL benchmark" ON)
 option(BUILD_STATIC "Build static library" OFF)
-option(ENGINE_ENABLE_CONTRACTS "Enable Boost.Contract checks" ON)
+option(ENGINE_ENABLE_CONTRACTS "Enable Boost.Contract checks" OFF)
 
 if (BUILD_STATIC)
     set(Boost_USE_STATIC_LIBS ON)
@@ -82,6 +82,10 @@ if (BUILD_PROTOCOL_TESTS)
             engine-protocol
     )
 
+    if (NOT ENGINE_ENABLE_CONTRACTS)
+        target_compile_definitions(engine-protocol-tests PRIVATE BOOST_CONTRACT_NO_CHECKS)
+    endif ()
+
     include(GoogleTest)
     gtest_discover_tests(engine-protocol-tests)
 endif()
@@ -114,7 +118,9 @@ if (BUILD_PROTOCOL_BENCHMARK)
             engine-protocol
     )
 
-    target_compile_definitions(engine-protocol-benchmarks PRIVATE BOOST_CONTRACT_NO_CHECKS)
+    if (NOT ENGINE_ENABLE_CONTRACTS)
+        target_compile_definitions(engine-protocol-benchmarks PRIVATE BOOST_CONTRACT_NO_CHECKS)
+    endif ()
 endif ()
 
 add_library(engine::protocol ALIAS engine-protocol)

@@ -25,7 +25,15 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.variant }} -DBUILD_PROTOCOL_TESTS=ON -DBUILD_PROTOCOL_BENCHMARK=ON
+          if [ "${{ matrix.variant }}" = "debug" ]; then
+              CONTRACTS=ON
+          else
+              CONTRACTS=OFF
+          fi
+          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.variant }} \
+                   -DBUILD_PROTOCOL_TESTS=ON \
+                   -DBUILD_PROTOCOL_BENCHMARK=ON \
+                   -DENGINE_ENABLE_CONTRACTS=${CONTRACTS}
           make -j4
           ctest  --output-on-failure --verbose
           cd ..
