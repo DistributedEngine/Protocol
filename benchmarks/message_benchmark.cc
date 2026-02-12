@@ -9,10 +9,10 @@
 
 #include <engine/protocol.hpp>
 
-using engine::protocol::request;
+using engine::protocol::message;
 
 static std::array<std::byte, 64> make_buffer() {
-    std::array<std::byte, 64> _buffer{};
+    alignas(4) static std::array<std::byte, 64> _buffer{};
 
     constexpr std::uint32_t _action = 0xAABBCCDD;
     constexpr std::uint16_t _count  = 3;
@@ -40,80 +40,80 @@ static std::array<std::byte, 64> make_buffer() {
     return _buffer;
 }
 
-static void BM_request_get_id(benchmark::State& state) {
+static void BM_message_get_id(benchmark::State& state) {
     auto _buffer = make_buffer();
-    const request _req(_buffer);
+    const message _msg(_buffer);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_req.get_id());
+        benchmark::DoNotOptimize(_msg.get_id());
     }
 }
-BENCHMARK(BM_request_get_id);
+BENCHMARK(BM_message_get_id);
 
-static void BM_request_get_action(benchmark::State& state) {
+static void BM_message_get_action(benchmark::State& state) {
     auto _buffer = make_buffer();
-    const request _req(_buffer);
+    const message _msg(_buffer);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_req.get_action());
+        benchmark::DoNotOptimize(_msg.get_action());
     }
 }
-BENCHMARK(BM_request_get_action);
+BENCHMARK(BM_message_get_action);
 
-static void BM_request_get_param_count(benchmark::State& state) {
+static void BM_message_get_param_count(benchmark::State& state) {
     auto _buffer = make_buffer();
-    const request _req(_buffer);
+    const message _msg(_buffer);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_req.get_param_count());
+        benchmark::DoNotOptimize(_msg.get_param_count());
     }
 }
-BENCHMARK(BM_request_get_param_count);
+BENCHMARK(BM_message_get_param_count);
 
-static void BM_request_get_param_sizes_ptr(benchmark::State& state) {
+static void BM_message_get_param_sizes_ptr(benchmark::State& state) {
     auto _buffer = make_buffer();
-    const request _req(_buffer);
+    const message _msg(_buffer);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_req.get_param_sizes());
+        benchmark::DoNotOptimize(_msg.get_param_sizes());
     }
 }
-BENCHMARK(BM_request_get_param_sizes_ptr);
+BENCHMARK(BM_message_get_param_sizes_ptr);
 
-static void BM_request_get_param_0(benchmark::State& state) {
+static void BM_message_get_param_0(benchmark::State& state) {
     auto _buffer = make_buffer();
-    const request _req(_buffer);
+    const message _msg(_buffer, true);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_req.get_param(0));
+        benchmark::DoNotOptimize(_msg.get_param(0));
     }
 }
-BENCHMARK(BM_request_get_param_0);
+BENCHMARK(BM_message_get_param_0);
 
-static void BM_request_get_param_2(benchmark::State& state) {
+static void BM_message_get_params_data(benchmark::State& state) {
     auto _buffer = make_buffer();
-    const request _req(_buffer);
+    const message _msg(_buffer, true);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_req.get_param(2));
+        benchmark::DoNotOptimize(_msg.get_params_data());
     }
 }
-BENCHMARK(BM_request_get_param_2);
+BENCHMARK(BM_message_get_params_data);
 
-static void BM_request_construct(benchmark::State& state) {
-    auto _buffer = make_buffer();
-
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(request(_buffer));
-    }
-}
-BENCHMARK(BM_request_construct);
-
-static void BM_request_construct_precomputed(benchmark::State& state) {
+static void BM_message_construct(benchmark::State& state) {
     auto _buffer = make_buffer();
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(request(_buffer, true));
+        benchmark::DoNotOptimize(message(_buffer));
     }
 }
-BENCHMARK(BM_request_construct_precomputed);
+BENCHMARK(BM_message_construct);
+
+static void BM_message_construct_precomputed(benchmark::State& state) {
+    auto _buffer = make_buffer();
+
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(message(_buffer, true));
+    }
+}
+BENCHMARK(BM_message_construct_precomputed);

@@ -4,6 +4,6 @@
 #ifndef ENGINE_PROTOCOL_HPP
 #define ENGINE_PROTOCOL_HPP
 
-#include <engine/protocol/request.hpp>
+#include <engine/protocol/message.hpp>
 
 #endif // ENGINE_PROTOCOL_HPP
