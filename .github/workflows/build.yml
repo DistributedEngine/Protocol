@@ -25,7 +25,23 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.variant }} -DBUILD_PROTOCOL_TESTS=ON -DBUILD_PROTOCOL_BENCHMARK=ON
+          if [ "${{ matrix.variant }}" = "debug" ]; then
+              BUILD_CONTRACTS=ON
+          else
+              BUILD_CONTRACTS=OFF
+          fi
+          
+          if [ "${{ matrix.type }}" = "static" ]; then
+              BUILD_STATIC=ON
+          else
+              BUILD_STATIC=OFF
+          fi
+          
+          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.variant }} \
+                   -DBUILD_PROTOCOL_TESTS=ON \
+                   -DBUILD_PROTOCOL_BENCHMARK=ON \
+                   -DBUILD_CONTRACTS=${BUILD_CONTRACTS} \
+                   -DBUILD_STATIC=${BUILD_STATIC}
           make -j4
           ctest  --output-on-failure --verbose
           cd ..

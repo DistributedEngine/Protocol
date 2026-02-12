@@ -12,6 +12,15 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
 
 option(BUILD_PROTOCOL_TESTS "Build PROTOCOL tests" ON)
 option(BUILD_PROTOCOL_BENCHMARK "Build PROTOCOL benchmark" ON)
+option(BUILD_STATIC "Build static library" OFF)
+option(BUILD_CONTRACTS "Enable Boost.Contract checks" OFF)
+
+if (BUILD_STATIC)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_USE_STATIC_RUNTIME ON)
+endif ()
+
+find_package(Boost REQUIRED COMPONENTS contract)
 
 add_library(engine-protocol INTERFACE)
 target_include_directories(engine-protocol INTERFACE
@@ -19,6 +28,12 @@ target_include_directories(engine-protocol INTERFACE
         $<INSTALL_INTERFACE:include>
 )
 target_compile_features(engine-protocol INTERFACE cxx_std_23)
+
+target_link_libraries(engine-protocol INTERFACE Boost::contract)
+
+if (NOT BUILD_CONTRACTS)
+    target_compile_definitions(engine-protocol INTERFACE BOOST_CONTRACT_NO_CHECKS)
+endif ()
 
 include(CMakePackageConfigHelpers)
 
@@ -68,6 +83,10 @@ if (BUILD_PROTOCOL_TESTS)
             engine-protocol
     )
 
+    if (NOT BUILD_CONTRACTS)
+        target_compile_definitions(engine-protocol-tests PRIVATE BOOST_CONTRACT_NO_CHECKS)
+    endif ()
+
     include(GoogleTest)
     gtest_discover_tests(engine-protocol-tests)
 endif()
@@ -100,7 +119,9 @@ if (BUILD_PROTOCOL_BENCHMARK)
             engine-protocol
     )
 
-    target_compile_definitions(engine-protocol-benchmarks PRIVATE BOOST_CONTRACT_NO_CHECKS)
+    if (NOT BUILD_CONTRACTS)
+        target_compile_definitions(engine-protocol-benchmarks PRIVATE BOOST_CONTRACT_NO_CHECKS)
+    endif ()
 endif ()
 
 add_library(engine::protocol ALIAS engine-protocol)
