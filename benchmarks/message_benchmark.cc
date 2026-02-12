@@ -60,45 +60,15 @@ static void BM_message_get_action(benchmark::State& state) {
 }
 BENCHMARK(BM_message_get_action);
 
-static void BM_message_get_param_count(benchmark::State& state) {
-    auto _buffer = make_buffer();
-    const message _msg(_buffer);
-
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(_msg.get_param_count());
-    }
-}
-BENCHMARK(BM_message_get_param_count);
-
-static void BM_message_get_param_sizes_ptr(benchmark::State& state) {
-    auto _buffer = make_buffer();
-    const message _msg(_buffer);
-
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(_msg.get_param_sizes());
-    }
-}
-BENCHMARK(BM_message_get_param_sizes_ptr);
-
-static void BM_message_get_param_0(benchmark::State& state) {
+static void BM_message_get_parameter_0(benchmark::State& state) {
     auto _buffer = make_buffer();
     const message _msg(_buffer, true);
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(_msg.get_param(0));
+        benchmark::DoNotOptimize(_msg.get_parameter(0));
     }
 }
-BENCHMARK(BM_message_get_param_0);
-
-static void BM_message_get_params_data(benchmark::State& state) {
-    auto _buffer = make_buffer();
-    const message _msg(_buffer, true);
-
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(_msg.get_params_data());
-    }
-}
-BENCHMARK(BM_message_get_params_data);
+BENCHMARK(BM_message_get_parameter_0);
 
 static void BM_message_construct(benchmark::State& state) {
     auto _buffer = make_buffer();
